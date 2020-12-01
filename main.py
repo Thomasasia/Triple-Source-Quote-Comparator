@@ -26,19 +26,19 @@ with open("hatespeech.csv", encoding='utf8') as file:
             hate.append(row[6].lower())
 
 park = []
-with open("southpark.csv", encoding='utf8') as file:
+with open("reviews.csv", encoding='utf8') as file:
     reader = csv.reader(file,delimiter=',')
-    line = 1
+    #line = 1
     for row in reader:
-        if(line%2==1): # only read even lines, as odd ones contain junk.
-            line+=1
-            continue
-        else:
-            park.append(row[3].lower())
-            line+=1
+        #if(line%2==1): # only read even lines, as odd ones contain junk.
+        #    line+=1
+        #    continue
+        #else:
+        park.append(row[0].lower()) # 3 for southpark
+        #line+=1
 
 # These are the words to be ignored, due to the high frequency in our language
-cullwords = "the of and to a in for is on that by this with i you it not or be are from at don't as lol &amp tell said being never bad them why im say your it's no i'll right, yeah. now, okay, you, &amp; u where time were him because when yeah, even real girl . man girl he's still good look only y'all , could over back what's there's let been would there it. well who has one take ain't aint he's mr. been would there going her here his no, right need let's then want really make people well, some well, she can't see now think we're well you're got up these so oh gonna he our out come know how oh, all thank you! keep at have new more an was we will home can us about if page my rt @ me do you too like get but they i'm work just did didn't what that that's go".split()
+cullwords = "the of and to a in for is on that by this with i you it not or be are from at game play games game. any much ever am had buy very after first don't as lol &amp tell said being never bad them why im say your it's no i'll right, yeah. now, okay, you, &amp; u where time were him because when yeah, even real girl . man girl he's still good look only y'all , could over back what's there's let been would there it. well who has one take ain't aint he's mr. been would there going her here his no, right need let's then want really make people well, some well, she can't see now  its than 2 other i've way think we're well you're got up these so oh gonna he our out come know how oh, all thank you! keep at have new more an was we will home can us about if page my rt @ me do you too like get but they i'm work just did didn't what that that's go".split()
 
 # Create dictionaries of word frequencies
 hatefreq = {}
@@ -133,6 +133,21 @@ hatescores = Counter(hatefreq)
 parkscores = Counter(parkfreq)
 print(hatescores.most_common(30))
 print(parkscores.most_common(10))
+
+# renormalzie the data, to make it %100-y
+
+mh = max(hates)
+for i in range(len(hates)):
+    if hates[i] != 0:
+        hates[i] = (mh/hates[i])*100
+
+mh = max(parks)
+for i in range(len(parks)):
+    if parks[i] != 0:
+        parks[i] = (mh/parks[i])*100
+del mh
+
+
 plt.plot(hates, parks, 'ro')
 plt.show()
 """

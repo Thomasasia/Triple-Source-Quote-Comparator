@@ -24,9 +24,9 @@ f.close()
 f = open("reviews.csv","a")
 
 for t in text:
-    f.write(t)
-    
-    
+    f.write(t+'\n')
+
+
 f.close()
 
 
