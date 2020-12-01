@@ -52,12 +52,12 @@ def dbscan(points, e, min_pnts): # Performs DBSCAN on the set of points. 99% acc
     clusters = []
     total = len(points)
     visited = 0
-    progressbar(visited, total,len(clusters),"", 60)
+    progressbar(visited, total,len(clusters)," ", 60)
     for point in points:
         if not point.visited:
             point.visit()
             visited += 1
-            progressbar(visited, total,len(clusters),"", 60)
+            progressbar(visited, total,len(clusters)," ", 60)
             N = get_neighborhood(point, points, e)
             point.density = len(N)
             if len(N) >= min_pnts:
@@ -70,7 +70,7 @@ def dbscan(points, e, min_pnts): # Performs DBSCAN on the set of points. 99% acc
                         if not p.visited:
                             p.visit()
                             visited += 1
-                            progressbar(visited, total,len(clusters)+1,"", 60)
+                            progressbar(visited, total,len(clusters)+1," ", 60)
                             if p.clusterId == -1:
                                 p.clusterId = cluster.id
                                 cluster.add(p)
@@ -88,17 +88,17 @@ def dbscan(points, e, min_pnts): # Performs DBSCAN on the set of points. 99% acc
 
 def plot_clusters(clusters,points): # Plots each cluster given to it, then the left over noise points.
 
-    print("Number of clusters: ",len(clusters))
+    #print("\nNumber of clusters: ",len(clusters))
     for cluster in clusters:
-        print("Plotting cluster ", cluster.id)
-        print("\tCluster size: ",len(cluster.points))
+        #print("Plotting cluster ", cluster.id)
+        #print("\tCluster size: ",len(cluster.points))
         x = []
         y = []
         for point in cluster.points:
             x.append(point.x)
             y.append(point.y)
         plt.scatter(x, y, s=3)
-        print("\tX:%i\n\tY:%i" % (len(x),len(y)))
+        #print("\tX:%i\n\tY:%i" % (len(x),len(y)))
 
     x = []
     y = []
@@ -323,7 +323,7 @@ if USEPICKLE:
         infile.close()
     except FileNotFoundError:
         print("No clusters file found, making a new one!")
-        clusters = dbscan(points, 3, 3)
+        clusters = dbscan(points, 1,6)#3, 3)
 else:
     clusters = dbscan(points, 1.5, 6)
 
