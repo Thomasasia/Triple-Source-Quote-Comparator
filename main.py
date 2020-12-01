@@ -1,3 +1,4 @@
+print("Program Started")
 from statistics import mean, fmean, median, median_grouped,mode
 import csv
 import matplotlib.pyplot as plt
@@ -5,31 +6,58 @@ from tqdm import tqdm
 import sys
 import time
 import pickle
+import random
 
 
-USEPICKLE = True
-PICKLENAME = "clusters.p"
+USEPICKLE = False # Set this to true if you want to use saved data
+PICKLENAME = "clusters.p" # name of file to save/load from
+print("""
+             ,,,,,,,,
+           ,|||````||||
+     ,,,,|||||       ||,
+  ,||||```````       `||
+,|||`                 |||,
+||`     ....,          `|||
+||     ::::::::          |||,
+||     :::::::'     ||    ``|||,
+||,     :::::'               `|||
+`||,                           |||
+ `|||,       ||          ||    ,||
+   `||                        |||`
+    ||                   ,,,||||
+    ||              ,||||||```
+   ,||         ,,|||||`
+  ,||`   ||   |||`
+ |||`         ||
+,||           ||
+||`           ||
+|||,         |||
+ `|||,,    ,|||
+   ``||||||||`
 
+    Let's go!!
+""")
 
-def progressbar(current,max, prefix="", size=60, file=sys.stdout): # From stack overflow
+def progressbar(current,max, clusters, prefix="", size=60, file=sys.stdout): # Stolen and modified from Stack Overflow. This is used to display a progress bar. Only works in a proper terminal.
     count = max
     j = current
 
     x = int(size*j/count)
-    file.write("%s[%s%s] %i/%i\r" % (prefix, "#"*x, "."*(size-x), j, count))
+    file.write("%s[%s%s] %i/%i Nodes Processed, %i Clusters Discovered\r" % (prefix, "#"*x, "."*(size-x), j, count, clusters))
     file.flush()
 
 
-def dbscan(points, e, min_pnts):
+def dbscan(points, e, min_pnts): # Performs DBSCAN on the set of points. 99% accurate. Still messes up sometimes, and I'm not sure why.
+    print("========== Performing DBSCAN ==========")
     clusters = []
     total = len(points)
     visited = 0
-    progressbar(visited, total,"Computing Nodes: ", 60)
+    progressbar(visited, total,len(clusters),"", 60)
     for point in points:
         if not point.visited:
             point.visit()
             visited += 1
-            progressbar(visited, total,"Computing Nodes: ", 60)
+            progressbar(visited, total,len(clusters),"", 60)
             N = get_neighborhood(point, points, e)
             point.density = len(N)
             if len(N) >= min_pnts:
@@ -42,34 +70,35 @@ def dbscan(points, e, min_pnts):
                         if not p.visited:
                             p.visit()
                             visited += 1
-                            progressbar(visited, total,"Computing Nodes: ", 60)
+                            progressbar(visited, total,len(clusters)+1,"", 60)
                             if p.clusterId == -1:
                                 p.clusterId = cluster.id
+                                cluster.add(p)
                                 pn = get_neighborhood(p,points,e)
                                 if len(pn) >= min_pnts:
                                     for i in pn:
                                         if i not in N:
                                             N.append(i)
-                                            #print(len(N))
                     clusters.append(cluster)
-                    print(clusters)
-
                 else:
                     print("Something messed up!")
             else:
                 point.noise = True
     return clusters
 
-def plot_clusters(clusters,points):
+def plot_clusters(clusters,points): # Plots each cluster given to it, then the left over noise points.
 
-
+    print("Number of clusters: ",len(clusters))
     for cluster in clusters:
+        print("Plotting cluster ", cluster.id)
+        print("\tCluster size: ",len(cluster.points))
         x = []
         y = []
         for point in cluster.points:
             x.append(point.x)
             y.append(point.y)
-            plt.scatter(x, y, s=3)
+        plt.scatter(x, y, s=3)
+        print("\tX:%i\n\tY:%i" % (len(x),len(y)))
 
     x = []
     y = []
@@ -84,46 +113,42 @@ def plot_clusters(clusters,points):
     plt.show()
 
 
-def get_neighborhood(point, points, e):
+def get_neighborhood(point, points, e): # Returns the points surrounding a point.
     neighborhood = []
     x = point.x
     y = point.y
     for q in points:
-        if dist(x,y,q.x,q.y) >= e:
+        if dist(x,y,q.x,q.y) <= e:
             neighborhood.append(q)
 
     return neighborhood
 
-def dist(x1,y1,x2,y2):
+def dist(x1,y1,x2,y2): # returns the euclidean distance between two points.
     return ((x1-x2)**2 + (y1-y2)**2)**0.5
 
-class Point:
-    x = 0
-    y = 0
+class Point: # Point class to hold all of the information of a point
     def __init__(self, x, y):
+        self.density = 0
         self.x = x
         self.y = y
-    density = 0
-    core = False
+        self.core = False
+        self.visited = False
+        self.noise = False
+        self.clusterId = -1
     def visit(self):
         self.visited = True
-    visited = False
-    noise = False
-    clusterId = -1
 
-class Cluster:
-    points = []
-    id = -1
-    def __init__(self,points):
-        self.points = points
+
+class Cluster: # Cluster class, postly to hold the points
     def __init__(self):
-        pass
+        self.points = []
+        self.id = -1
     def add(self, point):
         self.points.append(point)
 
 
 # import the datasets
-MINLEN = 30
+MINLEN = 30 # minimum length of a tweet
 trumpstats = []
 initial = True # To not read the first line, which has extra information
 with open("trumptweets.csv", encoding='utf8') as file:
@@ -167,10 +192,10 @@ parkfreq = {}
 
 for line in hate:
     for word in line.split():
-        if hatefreq.get(word) != None:
+        if hatefreq.get(word) != None: # incriments the value if the key exists
             count = hatefreq.get(word) + 1
             hatefreq.update({word : count})
-        elif(word not in cullwords):
+        elif(word not in cullwords): # otherwise create the key and set the value to 1
             hatefreq.update({word : 1})
 
 for line in park:
@@ -207,6 +232,7 @@ for tweet in trumpstats:
             parkery.append(0)
 
     # Set the new hate and park scores for the trump tweet
+    # I do this by getting the mean, because I think thats probably the best way to go about it.
     tweet[1] = mean(hatred)
     tweet[2] = mean(parkery)
 
@@ -242,8 +268,8 @@ meanpark = meanpark/len(trumpstats)
 print("Stats:")
 print("\tHate Mean: ",meanhate)
 print("\tHate Max: ",maxhate)
-print("\tPark Mean: ",meanpark)
-print("\tPark Max: ",maxpark)
+print("\tAmzn Mean: ",meanpark)
+print("\tAmzn Max: ",maxpark)
 
 print("Most hateful tweet:")
 print(maxhatetweet)
@@ -255,17 +281,20 @@ from collections import Counter
 
 hatescores = Counter(hatefreq)
 parkscores = Counter(parkfreq)
+# Print the most common words to add to the cull list if needed. Debug tool.
 #print(hatescores.most_common(30))
 #print(parkscores.most_common(10))
+
 
 # renormalzie the data, to make it %100-y
 
 mh = max([max(hates), max(parks)])
 
+#mh = max(hates)
 for i in range(len(hates)):
     if hates[i] != 0:
         hates[i] = (hates[i]/mh)*100
-
+#mh = max(parks)
 for i in range(len(parks)):
     if parks[i] != 0:
         parks[i] = (parks[i]/mh)*100
@@ -274,58 +303,36 @@ del mh
 points = []
 flipper = 0
 for i in range(len(hates)):
-    if ((parks[i]**2 + hates[i]**2)**0.5) <= 45:
-        if flipper > 20: # flip to decrease the size of the dataset, to stop my computer from dying. 6 might be fine
+    d = (parks[i]**2 + hates[i]**2)**0.5
+    if ( d <= 100):
+        if  random.randrange(0,int(d*2+1)-int(d*2/100)) == 0:#flipper % 20: # flip to decrease the size of the dataset, to stop my computer from dying. 6 might be fine
             points.append(Point(parks[i],hates[i]))
             flipper = 0
         flipper +=1
     else:
         points.append(Point(parks[i],hates[i]))
 
-print("yeet")
 
-
+# Load old data. Sorta doesn't work.
 if USEPICKLE:
     try:
         infile = open(PICKLENAME, 'rb')
-        clusters = pickle.load(infile)
+        load = pickle.load(infile)
+        points = load[0]
+        clusters = load[1]
         infile.close()
     except FileNotFoundError:
         print("No clusters file found, making a new one!")
         clusters = dbscan(points, 3, 3)
 else:
-    clusters = dbscan(points, 3, 3)
-print("yeet")
-print(clusters)
-outfile = open(PICKLENAME,wb)
-pickle.dump(clusters, outfile)
+    clusters = dbscan(points, 1.5, 6)
+
+# Save data
+outfile = open(PICKLENAME,'wb')
+pickle.dump([points, clusters], outfile)
 outfile.close
 plot_clusters(clusters,points)
-print("yeet")
-
-"""
-sentences = [text.split() for text in sentences]
-
-dictionary = corpora.Dictionary(sentences)
-
-feat_c=len(dictionary.token2id)
-corpus=[dictionary.doc2bow(text) for text in sentences]
-
-model = models.TfidfModel(corpus)
-
-for trump in trumpsen:
-    tweet = trump[0].split()
-    for t in tweet:
-        if t in cullwords:
-            tweet.remove(t)
-
-    vec = dictionary.doc2bow(tweet)
-    index = similarities.SparseMatrixSimilarity(model[corpus],num_features=feat_c)
-
-    sim = index[model[vec]]
-
-    trump[1] = max(sim)
 
 
-print(trumpsen)
-"""
+#for point in points:
+#    print(point.clusterId)
