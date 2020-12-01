@@ -1,6 +1,6 @@
 from statistics import mean, fmean, median, median_grouped,mode
 import csv
-
+import matplotlib.pyplot as plt
 
 # import the datasets
 trumpstats = []
@@ -38,7 +38,7 @@ with open("southpark.csv", encoding='utf8') as file:
             line+=1
 
 # These are the words to be ignored, due to the high frequency in our language
-cullwords = "the of and to a in for is on that by this with i you it not or be are from at as your all have new more an was we will home can us about if page my rt @ me do you too like get but they just did didn't what that that's".split()
+cullwords = "the of and to a in for is on that by this with i you it not or be are from at don't as lol &amp tell said being never bad them why im say your it's no i'll right, yeah. now, okay, you, &amp; u where time were him because when yeah, even real girl . man girl he's still good look only y'all , could over back what's there's let been would there it. well who has one take ain't aint he's mr. been would there going her here his no, right need let's then want really make people well, some well, she can't see now think we're well you're got up these so oh gonna he our out come know how oh, all thank you! keep at have new more an was we will home can us about if page my rt @ me do you too like get but they i'm work just did didn't what that that's go".split()
 
 # Create dictionaries of word frequencies
 hatefreq = {}
@@ -92,25 +92,27 @@ for tweet in trumpstats:
 
 
 
-# Obtain cool statistics
+# Obtain cool statistics and also create the list of points for our plot
 meanhate = 0
 meanpark = 0
 maxhate = 0
 maxhatetweet = "test"
 maxpark = 0
 maxparktweet = "test"
+# Here is where my variable naming reached its limit.
+hates = []
+parks = []
 for stat in trumpstats:
-    try:
-        if maxhate < stat[1]:
-            maxhate = stat[1]
-            maxhatetweet = stat[0]
-        if maxpark < stat[2]:
-            maxpark = stat[2]
-            maxparktweet=stat[0]
-        meanhate += stat[1]
-        meanpark += stat[2]
-    except UnicodeEncodeError:
-        pass
+    if maxhate < stat[1]:
+        maxhate = stat[1]
+        maxhatetweet = stat[0]
+    if maxpark < stat[2]:
+        maxpark = stat[2]
+        maxparktweet=stat[0]
+    meanhate += stat[1]
+    meanpark += stat[2]
+    hates.append(stat[1])
+    parks.append(stat[2])
 meanhate = meanhate/len(trumpstats)
 meanpark = meanpark/len(trumpstats)
 
@@ -125,6 +127,14 @@ print("\tPark Max: ",maxpark)
 print(maxhatetweet)
 print(maxparktweet)
 
+from collections import Counter
+
+hatescores = Counter(hatefreq)
+parkscores = Counter(parkfreq)
+print(hatescores.most_common(30))
+print(parkscores.most_common(10))
+plt.plot(hates, parks, 'ro')
+plt.show()
 """
 sentences = [text.split() for text in sentences]
 
