@@ -1,6 +1,6 @@
 import gensim
 import numpy as np
-from statistics import mean
+from statistics import mean, fmean, median, median_grouped,mode
 def avg_sentence_vector(words, model, num_features, index2word_set):
     #function to average all words vectors in a given paragraph
     featureVec = np.zeros((num_features,), dtype="float32")
@@ -46,7 +46,8 @@ corpus=[dictionary.doc2bow(text) for text in sentences]
 model = models.TfidfModel(corpus)
 
 
-tweet = "Arizona hearings on live right now on @OANN. Such total corruption. So sad for our country!".split()
+#tweet = "Arizona hearings on live right now on @OANN. Such total corruption. So sad for our country!".split()
+tweet = "I hate them niggers.".split()
 tweet2 = []
 cull = 0
 for i in tweet:
@@ -61,4 +62,12 @@ index = similarities.SparseMatrixSimilarity(model[corpus],num_features=feat_c)
 
 sim = index[model[vec]]
 
+
+print(vec)
+
 print(mean(sim))
+print(fmean(sim))
+print(median(sim))
+print(median_grouped(sim))
+print(mode(sim))
+print(max(sim))
